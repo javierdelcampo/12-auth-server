@@ -1,5 +1,4 @@
 const { response } = require('express');
-const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const { generaJWT } = require('../helpers/jws')
 
@@ -31,7 +30,7 @@ const crearUsuario = async (req, res = response) => {
         dbUser.password = bcrypt.hashSync( password, salt);
 
         // Generar el JWT
-        const token = await generaJWT(dbUser.id, name);
+        const token = await generaJWT(dbUser.id, name, email);
         console.log(token);
 
         // Crear el usuario de DB
@@ -41,6 +40,7 @@ const crearUsuario = async (req, res = response) => {
         return res.status(201).json({
             ok: true,
             uid: dbUser.id,
+            email: dbUser.email,
             name,
             token
         });
@@ -64,6 +64,8 @@ const loginUsuario = async (req, res = response ) => {
 
     const Usuario = require('../models/Usuario');
 
+    console.log('loginUsuario');
+
     try {
 
         const dbUser = await Usuario.findOne({ email: email });
@@ -71,7 +73,7 @@ const loginUsuario = async (req, res = response ) => {
         if (!dbUser) {
             return res.status(400).json({
                 ok: false,
-                msg: 'Credenciales no válidas'
+                msg: 'Credenciales no válidas. USER'
             })
         }
 
@@ -86,7 +88,7 @@ const loginUsuario = async (req, res = response ) => {
         }
 
         // Generar JWT
-        const token = await generaJWT(dbUser.id, dbUser.name);
+        const token = await generaJWT(dbUser.id, dbUser.name, dbUser.email);
         console.log(token);
 
 
@@ -95,6 +97,7 @@ const loginUsuario = async (req, res = response ) => {
             ok: true,
             uid: dbUser.id,
             name: dbUser.name,
+            email: dbUser.email,
             token
         })
 
@@ -113,15 +116,16 @@ const loginUsuario = async (req, res = response ) => {
 
 const renovarToken = async (req, res = response) => {
 
-    const { uid, name } = req;
+    const { uid, name, email } = req;
 
-    const token = await generaJWT(uid, name);
+    const token = await generaJWT(uid, name, email);
     
     console.log('renovarToken');
     return res.json({
         ok: true,
         uid,
         name,
+        email,
         token
     });
 
